@@ -1,0 +1,17 @@
+*.env
+.env
+# Ignore environment files
+*.env.local
+# Ignore local environment files
+*.env.development.local
+# Ignore development local environment files
+*.env.test.local        
+
+.env-sample
+/.vscode
+node_modules
+# Ignore node modules
+dist
+# Ignore distribution files
+coverage
+# Ignore coverage reports
