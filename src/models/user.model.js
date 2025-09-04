@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 
@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
     avatar: { type: String, required: true }, //cloudanary url
     coverImage: { type: String }, //cloudanary url
     password: { type: String, required: [true, 'password is required'] },
-    refreshToken: { type: String, required: true },
+    refreshToken: { type: String, required: false },
     watchHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Video' }]
 
 
