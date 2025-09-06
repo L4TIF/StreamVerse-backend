@@ -4,12 +4,15 @@ import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
+import fs from 'fs'
 
 const registerUser = asynchandler(async (req, res) => {
 
     //get user details form frontend
     const { fullName, userName, email, password, } = req.body
-
+    //get images path from multer
+    const avatarLocalPath = req.files?.avatar?.[0]?.path
+    const coverImageLocalPath = req.files?.coverImage?.[0]?.path
     //validate user details
     if (
         [fullName, userName, email, password].some((field) => field?.trim() === "")
@@ -21,15 +24,16 @@ const registerUser = asynchandler(async (req, res) => {
     const existedUser = await User.findOne({
         $or: [{ userName }, { email }]
     })
-    // console.log(existedUser)
+
     if (existedUser) {
+        // unlink uploaded file in local if user is trying to re-register
+        fs.unlinkSync(coverImageLocalPath)
+        fs.unlinkSync(avatarLocalPath)
         throw new ApiError(409, "User already exist")
-
     }
-
+    console.log("reached here")
     //check for images, check of avatar
-    const avatarLocalPath = req.files?.avatar?.[0]?.path
-    const coverImageLocalPath = req.files?.coverImage?.[0]?.path
+
 
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is required")
@@ -180,4 +184,27 @@ const refreshAccessToken = asynchandler(async (req, res) => {
     })
 })
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken }
+const changePassword = asynchandler(async (req, res) => {
+    //get old password and new password from req body
+    const { oldPassword, newPassword } = req.body
+    //find user in db with id
+    const userId = req.user._id
+    const user = await User.findById(userId)
+    if (!user) throw new ApiError(404, "user not found")
+
+    //compare old password to db password
+    console.log(oldPassword, user.password)
+    if (!user.isPasswordCorrect(oldPassword)) throw new ApiError(401, "Invalid current password")
+
+    //update password
+    user.password = newPassword.trim()
+    await user.save()
+
+    //send response
+    return res.status(200)
+        .json(new ApiResponse(200, { password: newPassword }, "Password updated successfully"))
+
+})
+
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changePassword }
