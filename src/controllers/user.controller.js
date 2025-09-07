@@ -194,17 +194,109 @@ const changePassword = asynchandler(async (req, res) => {
 
     //compare old password to db password
     console.log(oldPassword, user.password)
-    if (!user.isPasswordCorrect(oldPassword)) throw new ApiError(401, "Invalid current password")
+    if (! await user.isPasswordCorrect(oldPassword)) throw new ApiError(401, "Invalid current password")
 
     //update password
     user.password = newPassword.trim()
-    await user.save()
+    await user.save({ validateBeforeSave: false })
 
     //send response
     return res.status(200)
-        .json(new ApiResponse(200, { password: newPassword }, "Password updated successfully"))
+        .json(new ApiResponse(200, {}, "Password updated successfully"))
 
 })
 
+const getCurrentUser = asynchandler(async (req, res) => {
+    const userId = req.user._id
+    //fetch user
+    const user = await User.findById(userId).select("-password -refreshToken -__v -createdAt -updatedAt")
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, changePassword }
+    if (!user) throw new ApiError(404, "User not found")
+
+    return res.status(200)
+        .json(new ApiResponse(200, { user }, "fetched current user successfully"))
+
+})
+
+const updateAccountDetails = asynchandler(async (req, res) => {
+    const { fullName, email } = req.body
+    if ([fullName || email].some(field => field?.trim() === "")) {
+        throw new ApiError(400, "All fields are required")
+    }
+    //fetch user id from req
+    const userId = req.user._id
+
+    //fetch user from db
+    const user = await User.findByIdAndUpdate(userId,
+        { fullName, email }
+        , { new: true, runValidators: true }
+    ).select("-password -refreshToken -__v -createdAt -updatedAt")
+
+    if (!user) throw new ApiError(404, "User not found")
+
+    return res.status(200)
+        .json(new ApiResponse(200, { user }, "Account details updated successfully"))
+
+})
+
+const updateUserAvatar = asynchandler(async (req, res) => {
+    //get user id from req
+    const userId = req.user._id
+    //get image path from multer
+    const avatarLocalPath = req.file?.path
+
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar is required")
+
+    }
+
+    //upload image to cloudinary,avatar
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+    // console.log(avatar, CoverImage)
+
+    if (!avatar) throw ApiError(400, "Avatar is required")
+
+    //find user and update avatar
+    const user = await User.findByIdAndUpdate(userId,
+        { avatar: avatar.url },
+        { new: true, runValidators: true }
+    ).select("-password -refreshToken -__v -createdAt -updatedAt")
+
+    if (!user) throw new ApiError(404, "User not found")
+
+    return res.status(200)
+        .json(new ApiResponse(200, { user }, "Avatar updated successfully"))
+
+})
+
+const updateUserCoverImage = asynchandler(async (req, res) => {
+    //get user id from req
+    const userId = req.user._id
+    //get image path from multer
+    const coverImageLocalPath = req.file?.path
+
+    if (!coverImageLocalPath) {
+        throw new ApiError(400, "Cover Image is required")
+
+    }
+
+    //upload image to cloudinary,CoverImage
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    // console.log(avatar, CoverImage)
+
+    if (!coverImage) throw ApiError(400, "Cover Image is required")
+
+    //find user and update CoverImage
+    const user = await User.findByIdAndUpdate(userId,
+        { coverImage: coverImage.url },
+        { new: true, runValidators: true }
+    ).select("-password -refreshToken -__v -createdAt -updatedAt")
+
+    if (!user) throw new ApiError(404, "User not found")
+
+    return res.status(200)
+        .json(new ApiResponse(200, { user }, "Cover Image updated successfully"))
+
+})
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changePassword, getCurrentUser, updateAccountDetails, updateUserAvatar, updateUserCoverImage }
