@@ -9,7 +9,6 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET // Click 'View API Keys' above to copy your API secret
 });
 
-
 const deleteFromCloudinary = async (url) => {
 
     const publicId = url.split("/").pop().split(".")[0]
@@ -22,7 +21,6 @@ const deleteFromCloudinary = async (url) => {
     }
 
 }
-
 
 const uploadOnCloudinary = async (localFilePath) => {
     try {

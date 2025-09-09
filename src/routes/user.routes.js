@@ -32,4 +32,5 @@ router.route("/update-coverImage").put(verifyJWT,
     upload.single("coverImage"),
     updateUserCoverImage
 )
+
 export default router
