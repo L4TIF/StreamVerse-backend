@@ -1,7 +1,7 @@
 import { ApiError } from '../utils/ApiError.js';
 import { asynchandler } from '../utils/asynchandler.js'
 import { User } from "../models/user.model.js"
-import { uploadOnCloudinary } from '../utils/cloudinary.js';
+import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
 import fs from 'fs'
@@ -253,8 +253,10 @@ const updateUserAvatar = asynchandler(async (req, res) => {
     //upload image to cloudinary,avatar
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     // console.log(avatar, CoverImage)
-
     if (!avatar) throw ApiError(400, "Avatar is required")
+
+    const oldAvatar = await User.findById(userId).select("avatar")
+    await deleteFromCloudinary(oldAvatar.avatar)
 
     //find user and update avatar
     const user = await User.findByIdAndUpdate(userId,
@@ -275,16 +277,16 @@ const updateUserCoverImage = asynchandler(async (req, res) => {
     //get image path from multer
     const coverImageLocalPath = req.file?.path
 
-    if (!coverImageLocalPath) {
-        throw new ApiError(400, "Cover Image is required")
-
-    }
+    if (!coverImageLocalPath) throw new ApiError(400, "Cover Image is required")
 
     //upload image to cloudinary,CoverImage
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
     // console.log(avatar, CoverImage)
 
     if (!coverImage) throw ApiError(400, "Cover Image is required")
+
+    const oldCoverImage = await User.findById(userId).select("coverImage")
+    await deleteFromCloudinary(oldCoverImage.coverImage)
 
     //find user and update CoverImage
     const user = await User.findByIdAndUpdate(userId,
