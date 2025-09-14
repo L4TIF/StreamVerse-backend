@@ -373,6 +373,8 @@ const getUserChannelProfile = asynchandler(async (req, res) => {
 })
 
 const getUserWatchHistory = asynchandler(async (req, res) => {
+    if (!req?.user?._id) throw new ApiError(400, "Unauthorized")
+
     const user = await User.aggregate([
         {
             $match: {
@@ -415,6 +417,8 @@ const getUserWatchHistory = asynchandler(async (req, res) => {
             }
         }
     ])
+
+    if (!user) throw new ApiError(400, "Unauthorized")
 
     return res
         .status(200)
