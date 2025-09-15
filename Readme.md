@@ -1,1 +1,1 @@
-backend series 0 - 1.
+Backend of Streamverse Video streaming platform 
