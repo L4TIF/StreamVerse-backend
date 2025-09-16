@@ -3,10 +3,6 @@ import { verifyJWT } from "../middlewares/auth.middleware";
 import { getAllVideos } from "../controllers/video.controller";
 import { upload } from "../middlewares/multer.middleware";
 
-
-
-
-
 const router = Router()
 
 router.use(verifyJWT)
@@ -22,3 +18,7 @@ router.route("/")
             maxCount: 1
         }
     ]), publishAVideo)
+
+
+
+export default router

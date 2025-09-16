@@ -1,4 +1,5 @@
 import { Video } from "../models/video.model.js"
+import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asynchandler } from "../utils/asynchandler.js"
 
@@ -22,8 +23,21 @@ const getAllVideos = asynchandler(async (req, res) => {
         .skip((pageNumber - 1) * limitNumber)
         .limit(limitNumber)
 
+    if (!videos) throw new ApiError(404, "Videos not found")
 
     return res.status(200).json(new ApiResponse(200, videos, "Videos fetched successfully"))
 })
+
+
+//publish a video
+
+//get video by id
+
+//update a video
+
+//delete a video
+
+// togglePublishStatus
+
 
 export { getAllVideos }
