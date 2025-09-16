@@ -33,7 +33,6 @@ const registerUser = asynchandler(async (req, res) => {
         fs.unlinkSync(avatarLocalPath)
         throw new ApiError(409, "User already exist")
     }
-    console.log("reached here")
     //check for images, check of avatar
 
 
@@ -43,8 +42,13 @@ const registerUser = asynchandler(async (req, res) => {
     }
 
     //upload image to cloudinary,avatar
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    const [avatar, coverImage] = await Promise.all([
+        uploadOnCloudinary(avatarLocalPath),
+        uploadOnCloudinary(coverImageLocalPath)
+    ])
+
+
+
     // console.log(avatar, coverImage)
 
     if (!avatar) throw ApiError(400, "Avatar is required")

@@ -6,7 +6,7 @@ configDotenv()  //load env variables from .env file
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET 
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 const deleteFromCloudinary = async (url) => {
@@ -30,7 +30,7 @@ const uploadOnCloudinary = async (localFilePath) => {
             resource_type: "auto"
         })
 
-        console.log(result.url, result.public_id, "file is uploaded on cloudinary");
+        console.log( "file is uploaded on cloudinary");
         fs.unlinkSync(localFilePath)  //remove file from local uploads folder
         return result
     } catch (error) {
@@ -40,7 +40,21 @@ const uploadOnCloudinary = async (localFilePath) => {
     }
 }
 
+const generateThumbnail = (publicId) => {
+    const thumbnailUrl = cloudinary.url(publicId, {
+        resource_type: "video",
+        format: "jpg",
+        transformation: [
+            { width: 300, height: 200, crop: "fill" }, // resize
+            { start_offset: "5" } // capture frame at 5 seconds
+        ]
+    })
+
+    return thumbnailUrl
+}
+
 export {
     uploadOnCloudinary,
-    deleteFromCloudinary
+    deleteFromCloudinary,
+    generateThumbnail
 }
