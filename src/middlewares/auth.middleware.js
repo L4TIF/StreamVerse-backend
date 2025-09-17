@@ -1,7 +1,6 @@
 //create auth middleware to protect private routes
 
 import jwt from "jsonwebtoken";
-import { asynchandler } from "../utils/asynchandler.js";
 
 
 export const verifyJWT = (req, res, next) => {

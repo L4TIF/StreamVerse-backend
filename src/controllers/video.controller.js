@@ -1,8 +1,9 @@
+import mongoose from "mongoose"
 import { Video } from "../models/video.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asynchandler } from "../utils/asynchandler.js"
-import { generateThumbnail, uploadOnCloudinary } from "../utils/cloudinary.js"
+import { deleteFromCloudinary, generateThumbnail, uploadOnCloudinary } from "../utils/cloudinary.js"
 
 
 
@@ -71,16 +72,47 @@ const publishAVideo = asynchandler(async (req, res) => {
 })
 
 
-
-
-
 //get video by id
+const getVideoById = asynchandler(async (req, res) => {
+    const { videoFileId } = req.params
+    if (!mongoose.Types.ObjectId.isValid(videoFileId)) throw new ApiError(400, "invalid video id") //check if id is valid mongo id
+    const video = await Video.findById(videoFileId)
+    if (!video) throw new ApiError(404, "video not found")
+    res.status(200).json(new ApiResponse(200, video, "video fetched successfully"))
+})
 
 //update a video
+const updateVideoDetails = asynchandler(async (req, res) => {
+    const { videoFileId } = req.params
+    if (!mongoose.Types.ObjectId.isValid(videoFileId)) throw new ApiError(400, "invalid video id") //check if id is valid mongo id
+    //update video details title, desc, thumbnail
+    const { title, description } = req.body
+    const thumbnailLocalPath = req?.file?.path
+
+    let newThumbnail;
+    if (thumbnailLocalPath) {
+        //get old thumbnail id
+        const oldThumbnailUrl = await Video.findById(videoFileId).select("thumbnail")
+        await deleteFromCloudinary(oldThumbnailUrl.thumbnail)
+        //upload new thumbnail
+        newThumbnail = await uploadOnCloudinary(thumbnailLocalPath)
+    }
+
+    const updatedVideoDetails = await Video.findByIdAndUpdate(videoFileId,
+        { title, description, thumbnail: newThumbnail?.url }, { new: true, runValidators: true })
+
+    if (!updatedVideoDetails) throw new ApiError(404, "Video not found")
+
+    return res.status(200).json(new ApiResponse(200, updatedVideoDetails, "details update successfully"))
+})
 
 //delete a video
+
+const deleteVideo = asynchandler(async (req, res) => {
+
+})
 
 // togglePublishStatus
 
 
-export { getAllVideos, publishAVideo }
+export { getAllVideos, publishAVideo, getVideoById, updateVideoDetails }
