@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { configDotenv } from 'dotenv';
 import fs from 'fs';
+import { ApiError } from './ApiError.js';
 configDotenv()  //load env variables from .env file
 
 cloudinary.config({
@@ -9,15 +10,15 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const deleteFromCloudinary = async (url) => {
+const deleteFromCloudinary = async (url, resource_type = "image") => {
 
     const publicId = url.split("/").pop().split(".")[0]
 
     try {
-        await cloudinary.uploader.destroy(publicId)
+        await cloudinary.uploader.destroy(publicId, { resource_type })
         console.log(publicId + " " + url, "file is deleted from cloudinary");
     } catch (error) {
-        console.log("error while deleting from cloudinary");
+        throw new ApiError(500, `Error deleting cloudinary file : ${error.message} `)
     }
 
 }
@@ -30,7 +31,7 @@ const uploadOnCloudinary = async (localFilePath) => {
             resource_type: "auto"
         })
 
-        console.log( "file is uploaded on cloudinary");
+        console.log("file is uploaded on cloudinary");
         fs.unlinkSync(localFilePath)  //remove file from local uploads folder
         return result
     } catch (error) {

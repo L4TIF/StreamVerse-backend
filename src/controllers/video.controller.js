@@ -67,7 +67,7 @@ const publishAVideo = asynchandler(async (req, res) => {
 
     if (!video) throw ApiError(500, "publish failed")
 
-    return res.status(200).json(new ApiResponse(200, video, "Video published successfully"))
+    return res.status(201).json(new ApiResponse(200, video, "Video published successfully"))
 
 })
 
@@ -109,10 +109,20 @@ const updateVideoDetails = asynchandler(async (req, res) => {
 //delete a video
 
 const deleteVideo = asynchandler(async (req, res) => {
+    const { videoFileId } = req.params
+    if (!mongoose.Types.ObjectId.isValid(videoFileId)) throw new ApiError(400, "Invalid video id")
+
+    const deletedVideo = await Video.findByIdAndDelete(videoFileId, { returnDocument: "before" })
+    if (!deletedVideo) throw new ApiError(400, "video not found")
+    //delete video from cloudinary
+    console.log(deletedVideo)
+    await deleteFromCloudinary(deletedVideo.videoFile, "video")
+
+    res.status(200).json(new ApiResponse(200, deletedVideo, "video deleted successfully"))
 
 })
 
 // togglePublishStatus
 
 
-export { getAllVideos, publishAVideo, getVideoById, updateVideoDetails }
+export { getAllVideos, publishAVideo, getVideoById, updateVideoDetails, deleteVideo }
