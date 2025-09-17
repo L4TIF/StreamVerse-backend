@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
 
     fullName: { type: String, required: true, trim: true, index: true },
     userName: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
-    email: { type: String, required: true, unique: true, unique: true, lowercase: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     avatar: { type: String, required: true }, //cloudanary url
     coverImage: { type: String }, //cloudanary url
     password: { type: String, required: [true, 'password is required'] },

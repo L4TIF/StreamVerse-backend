@@ -231,10 +231,18 @@ const updateAccountDetails = asynchandler(async (req, res) => {
     }
     //fetch user id from req
     const userId = req.user._id
+    const updatedData = {}
+
+    if (email) {
+        const existedUser = await User.findOne({ email })
+        if (existedUser) throw new ApiError(400, "Email already exists")
+        updatedData.email = email
+    }
+    if (fullName) updatedData.fullName = fullName
 
     //fetch user from db
     const user = await User.findByIdAndUpdate(userId,
-        { fullName, email }
+        updatedData
         , { new: true, runValidators: true }
     ).select("-password -refreshToken -__v -createdAt -updatedAt")
 
