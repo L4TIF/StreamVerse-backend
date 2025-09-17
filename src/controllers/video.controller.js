@@ -124,5 +124,19 @@ const deleteVideo = asynchandler(async (req, res) => {
 
 // togglePublishStatus
 
+const togglePublishStatus = asynchandler(async (req, res) => {
+    const { videoFileId } = req.params
+    if (!mongoose.Types.ObjectId.isValid(videoFileId)) throw new ApiError(400, "Invalid video id")
 
-export { getAllVideos, publishAVideo, getVideoById, updateVideoDetails, deleteVideo }
+    const updatedVideoDetails = await Video.findById(videoFileId)
+
+    if (!updatedVideoDetails) throw new ApiError(404, "video not found")
+
+    updatedVideoDetails.isPublished = !updatedVideoDetails.isPublished
+    await updatedVideoDetails.save()
+
+    res.status(200).json(new ApiResponse(200, updatedVideoDetails, "Toggled status successfully"))
+})
+
+
+export { getAllVideos, publishAVideo, getVideoById, updateVideoDetails, deleteVideo, togglePublishStatus }

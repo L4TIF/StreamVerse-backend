@@ -13,15 +13,15 @@ dotenv.config({
 connectDB()
     .then(() => {
         app.on("error", (error) => {
-            console.log("Error", error)
+            console.log("Error", error.message)
             throw error
         })
         app.listen(PORT, () => console.log("app listening on port :", PORT))
-        app.get("/", (req, res) => {
-            res.send("<h1>Hello backend</h1>")
-        })
+        // app.get("/", (req, res) => {
+        //     res.send("<h1>Hello backend</h1>")
+        // })
     })
-    .catch(error => console.log("mongo db connection error", error))
+    .catch(error => console.log("mongo db connection error", error.message))
 
 
 
@@ -36,7 +36,7 @@ const app = express();
     try {
         await mongoose.connect(`${process.env.MONGODB_URI}/${DB_NAME}`)
         app.on("error", (error) => {
-            console.log("Error", error)
+            console.log("Error", error.message)
             throw error
         })
 
@@ -45,7 +45,7 @@ const app = express();
         })
 
     } catch (error) {
-        console.log("error :", error)
+        console.log("error :", error.message)
     }
 
 })()
