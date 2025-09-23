@@ -4,9 +4,11 @@ import { Subscription } from "../models/subscription.model.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asynchandler } from "../utils/asynchandler.js";
+import { isValidObjectId } from "mongoose";
 
 const toggleSubscription = asynchandler(async (req, res) => {
     const { channelId } = req.params
+    if (!isValidObjectId(channelId)) throw new ApiError(400, "Invalid channel id")
     const userId = req.user._id
     const isSubscribed = await Subscription.findOne({ subscriber: userId, channel: channelId })
     if (isSubscribed) {
@@ -21,6 +23,7 @@ const toggleSubscription = asynchandler(async (req, res) => {
 //get user channel subscribers  || users(channel) subscribers
 const getUserChannelSubscribers = asynchandler(async (req, res) => {
     const { channelId } = req.params
+    if (!isValidObjectId(channelId)) throw new ApiError(400, "Invalid channel id")
     const subscriberList = await Subscription.find({ channel: channelId }).populate("subscriber", "userName email avatar")
     res.status(200).json(new ApiResponse(200, subscriberList, "successfully fetched subscribers"))
 })

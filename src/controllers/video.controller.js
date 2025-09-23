@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asynchandler } from "../utils/asynchandler.js"
 import { deleteFromCloudinary, generateThumbnail, uploadOnCloudinary } from "../utils/cloudinary.js"
+import { isValidObjectId } from "mongoose"
 
 
 
@@ -28,8 +29,6 @@ const getAllVideos = asynchandler(async (req, res) => {
     if (!videos.length) throw new ApiError(404, "Videos not found")
     return res.status(200).json(new ApiResponse(200, videos, "Videos fetched successfully"))
 })
-
-
 
 
 //publish a video
@@ -77,7 +76,7 @@ const publishAVideo = asynchandler(async (req, res) => {
 //get video by id
 const getVideoById = asynchandler(async (req, res) => {
     const { videoFileId } = req.params
-    if (!mongoose.Types.ObjectId.isValid(videoFileId)) throw new ApiError(400, "invalid video id") //check if id is valid mongo id
+    if (!isValidObjectId(videoFileId)) throw new ApiError(400, "invalid video id") //check if id is valid mongo id
     const video = await Video.findById(videoFileId)
     if (!video) throw new ApiError(404, "video not found")
     res.status(200).json(new ApiResponse(200, video, "video fetched successfully"))
@@ -86,7 +85,7 @@ const getVideoById = asynchandler(async (req, res) => {
 //update a video
 const updateVideoDetails = asynchandler(async (req, res) => {
     const { videoFileId } = req.params
-    if (!mongoose.Types.ObjectId.isValid(videoFileId)) throw new ApiError(400, "invalid video id") //check if id is valid mongo id
+    if (!isValidObjectId(videoFileId)) throw new ApiError(400, "invalid video id") //check if id is valid mongo id
     //update video details title, desc, thumbnail
     const { title, description } = req.body
     const thumbnailLocalPath = req?.file?.path
@@ -112,7 +111,7 @@ const updateVideoDetails = asynchandler(async (req, res) => {
 
 const deleteVideo = asynchandler(async (req, res) => {
     const { videoFileId } = req.params
-    if (!mongoose.Types.ObjectId.isValid(videoFileId)) throw new ApiError(400, "Invalid video id")
+    if (!isValidObjectId(videoFileId)) throw new ApiError(400, "Invalid video id")
 
     const deletedVideo = await Video.findOneAndDelete({ _id: videoFileId, owner: req.user._id }, { returnDocument: "before" })
     if (!deletedVideo) throw new ApiError(400, "video not found")
@@ -128,7 +127,7 @@ const deleteVideo = asynchandler(async (req, res) => {
 
 const togglePublishStatus = asynchandler(async (req, res) => {
     const { videoFileId } = req.params
-    if (!mongoose.Types.ObjectId.isValid(videoFileId)) throw new ApiError(400, "Invalid video id")
+    if (!isValidObjectId(videoFileId)) throw new ApiError(400, "Invalid video id")
 
     const updatedVideoDetails = await Video.findOne({ _id: videoFileId, owner: req.user._id })
 
