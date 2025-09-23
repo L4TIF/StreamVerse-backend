@@ -16,9 +16,6 @@ const newTweet = asynchandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, tweet, "Tweet created successfully"))
 })
 
-
-
-
 //get user tweets
 const getUserTweets = asynchandler(async (req, res) => {
     const { userId, page = 1, limit = 10, sortBy = "createdAt", sortType = "desc", query } = req.params
@@ -31,6 +28,7 @@ const getUserTweets = asynchandler(async (req, res) => {
     if (!tweets.length) throw new ApiError(404, "No tweets found")
     return res.status(200).json(new ApiResponse(200, tweets, "Tweets fetched successfully"))
 })
+
 //get tweet by id
 const getTweetById = asynchandler(async (req, res) => {
     const { tweetId } = req.params
@@ -42,8 +40,6 @@ const getTweetById = asynchandler(async (req, res) => {
 })
 
 //update a tweet
-
-
 const updateTweet = asynchandler(async (req, res) => {
     const { tweetId } = req.params
     if (!isValidObjectId(tweetId)) throw new ApiError(400, "Invalid tweet id")
@@ -54,9 +50,6 @@ const updateTweet = asynchandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, tweet, "Tweet updated successfully"))
 })
 
-
-
-
 //delete a tweet
 const deleteTweet = asynchandler(async (req, res) => {
     const { tweetId } = req.params
@@ -65,14 +58,5 @@ const deleteTweet = asynchandler(async (req, res) => {
     if (!deleteTweet) throw new ApiError(500, "failed to delete tweet")
     res.status(200).json(new ApiResponse(200, deleteTweet, "tweet deleted successfully"))
 })
-
-
-
-
-
-
-
-
-
 
 export { getUserTweets, getTweetById, newTweet, updateTweet, deleteTweet }

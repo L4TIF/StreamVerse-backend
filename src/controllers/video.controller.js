@@ -7,7 +7,7 @@ import { deleteFromCloudinary, generateThumbnail, uploadOnCloudinary } from "../
 import { isValidObjectId } from "mongoose"
 
 
-
+//get all videos
 const getAllVideos = asynchandler(async (req, res) => {
     //get req queries
     const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query
@@ -29,7 +29,6 @@ const getAllVideos = asynchandler(async (req, res) => {
     if (!videos.length) throw new ApiError(404, "Videos not found")
     return res.status(200).json(new ApiResponse(200, videos, "Videos fetched successfully"))
 })
-
 
 //publish a video
 const publishAVideo = asynchandler(async (req, res) => {
@@ -72,7 +71,6 @@ const publishAVideo = asynchandler(async (req, res) => {
 
 })
 
-
 //get video by id
 const getVideoById = asynchandler(async (req, res) => {
     const { videoFileId } = req.params
@@ -108,7 +106,6 @@ const updateVideoDetails = asynchandler(async (req, res) => {
 })
 
 //delete a video
-
 const deleteVideo = asynchandler(async (req, res) => {
     const { videoFileId } = req.params
     if (!isValidObjectId(videoFileId)) throw new ApiError(400, "Invalid video id")
@@ -124,7 +121,6 @@ const deleteVideo = asynchandler(async (req, res) => {
 })
 
 // togglePublishStatus
-
 const togglePublishStatus = asynchandler(async (req, res) => {
     const { videoFileId } = req.params
     if (!isValidObjectId(videoFileId)) throw new ApiError(400, "Invalid video id")
