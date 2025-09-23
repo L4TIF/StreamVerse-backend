@@ -14,7 +14,7 @@ const tweetSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
-
+tweetSchema.index({ owner: 1 })
 tweetSchema.plugin(mongooseAggregatePaginate)
 
 

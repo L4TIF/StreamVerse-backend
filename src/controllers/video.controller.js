@@ -30,6 +30,8 @@ const getAllVideos = asynchandler(async (req, res) => {
 })
 
 
+
+
 //publish a video
 const publishAVideo = asynchandler(async (req, res) => {
     const { title, description, isPublished } = req.body
@@ -92,13 +94,13 @@ const updateVideoDetails = asynchandler(async (req, res) => {
     let newThumbnail;
     if (thumbnailLocalPath) {
         //get old thumbnail id
-        const oldThumbnailUrl = await Video.findById(videoFileId).select("thumbnail")
+        const oldThumbnailUrl = await Video.findOne({ _id: videoFileId, owner: req.user._id }).select("thumbnail")
         await deleteFromCloudinary(oldThumbnailUrl.thumbnail)
         //upload new thumbnail
         newThumbnail = await uploadOnCloudinary(thumbnailLocalPath)
     }
 
-    const updatedVideoDetails = await Video.findByIdAndUpdate(videoFileId,
+    const updatedVideoDetails = await Video.findOneAndUpdate({ _id: videoFileId, owner: req.user._id },
         { title, description, thumbnail: newThumbnail?.url }, { new: true, runValidators: true })
 
     if (!updatedVideoDetails) throw new ApiError(404, "Video not found")
@@ -112,7 +114,7 @@ const deleteVideo = asynchandler(async (req, res) => {
     const { videoFileId } = req.params
     if (!mongoose.Types.ObjectId.isValid(videoFileId)) throw new ApiError(400, "Invalid video id")
 
-    const deletedVideo = await Video.findByIdAndDelete(videoFileId, { returnDocument: "before" })
+    const deletedVideo = await Video.findOneAndDelete({ _id: videoFileId, owner: req.user._id }, { returnDocument: "before" })
     if (!deletedVideo) throw new ApiError(400, "video not found")
     //delete video from cloudinary
     console.log(deletedVideo)
@@ -128,7 +130,7 @@ const togglePublishStatus = asynchandler(async (req, res) => {
     const { videoFileId } = req.params
     if (!mongoose.Types.ObjectId.isValid(videoFileId)) throw new ApiError(400, "Invalid video id")
 
-    const updatedVideoDetails = await Video.findById(videoFileId)
+    const updatedVideoDetails = await Video.findOne({ _id: videoFileId, owner: req.user._id })
 
     if (!updatedVideoDetails) throw new ApiError(404, "video not found")
 
