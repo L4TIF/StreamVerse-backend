@@ -22,9 +22,8 @@ const getComments = asynchandler(async (req, res) => {
 
 })
 
-
 const newComment = asynchandler(async (req, res) => {
-    console.log(req.body)
+
     const { content } = req.body
     const { videoId } = req.params
 
@@ -41,20 +40,30 @@ const newComment = asynchandler(async (req, res) => {
 
 })
 
+const updateComment = asynchandler(async (req, res) => {
+    const { content } = req.body
+    const { commentId } = req.params
+    if (!isValidObjectId(commentId)) throw new ApiError(400, "Invaid commentId")
 
+    const newComment = await Comment.findOneAndUpdate({ _id: commentId, owner: req.user._id },
+        { content: content.toString().trim() },
+        { new: true, runValidators: true })
+    if (!newComment) throw new ApiError(404, "Comment not found")
+    res.status(200).json(new ApiResponse(200, newComment, "comment updated successfully"))
+})
 
-
-
-
-
-
-
-
+const deleteComment = asynchandler(async (req, res) => {
+    const { commentId } = req.params
+    if (!isValidObjectId(commentId)) throw new ApiError(400, "Invalid comment id")
+    const deletedComment = await Comment.findOneAndDelete({ _id: commentId, owner: req.user._id })
+    if (!deletedComment) throw new ApiError(404, "Comment not found")
+    res.status(200).json(new ApiResponse(200, deletedComment, "comment deleted successfully"))
+})
 
 
 export {
     newComment,
     getComments,
-    // updateComment,
-    // deleteComment
+    updateComment,
+    deleteComment
 }
