@@ -23,10 +23,19 @@ const likeSchema = new mongoose.Schema({
 }, { timestamps: true })
 
 // Compound indexes for common query patterns
-likeSchema.index({ likedBy: 1, video: 1 }, { unique: true })     // One like per user per video
-likeSchema.index({ likedBy: 1, comment: 1 }, { unique: true })  // One like per user per comment  
-likeSchema.index({ likedBy: 1, tweet: 1 }, { unique: true })    // One like per user per tweet
-
+// Compound indexes for common query patterns
+likeSchema.index(
+    { likedBy: 1, video: 1 },
+    { unique: true, partialFilterExpression: { video: { $exists: true } } }
+)
+likeSchema.index(
+    { likedBy: 1, comment: 1 },
+    { unique: true, partialFilterExpression: { comment: { $exists: true } } }
+)
+likeSchema.index(
+    { likedBy: 1, tweet: 1 },
+    { unique: true, partialFilterExpression: { tweet: { $exists: true } } }
+)
 // Individual indexes for counting likes
 likeSchema.index({ video: 1 })      // Count video likes
 likeSchema.index({ comment: 1 })    // Count comment likes

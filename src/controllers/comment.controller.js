@@ -3,6 +3,7 @@ import { asynchandler } from "../utils/asynchandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { Comment } from "../models/comment.model.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
+import { Like } from "../models/like.model.js"
 
 
 const getComments = asynchandler(async (req, res) => {
@@ -17,8 +18,22 @@ const getComments = asynchandler(async (req, res) => {
         .skip((pageNumber - 1) * limitNumber)
         .limit(limitNumber)
 
+    const totalComments = await Comment.countDocuments(filter)
+    const ids = comments.map(comment => comment._id)
+    const counts = await Like.aggregate([
+        { $match: { comment: { $in: ids } } },
+        { $group: { _id: "$comment", count: { $sum: 1 } } }
+    ])
+
+    const map = Object.fromEntries(counts.map(count => [count._id, count.count]))
+
+    const result = comments.map(comment => ({
+        ...comment.toObject(),
+        likes: map[comment._id] || 0
+    }))
+
     res.status(200)
-        .json(new ApiResponse(200, comments, comments.length ? "comments fetched successfully" : "no comments found"))
+        .json(new ApiResponse(200, result, totalComments ? "comments fetched successfully" : "no comments found"))
 
 })
 
@@ -60,10 +75,19 @@ const deleteComment = asynchandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, deletedComment, "comment deleted successfully"))
 })
 
+const getCommentById = asynchandler(async (req, res) => {
+    const { commentId } = req.params
+    if (!isValidObjectId(commentId)) throw new ApiError(400, "Invalid comment id")
+    const comment = await Comment.findById(commentId)
+    if (!comment) throw new ApiError(404, "Comment not found")
+    const likes = await Like.countDocuments({ comment: commentId })
+    res.status(200).json(new ApiResponse(200, { ...comment.toObject(), likes }, "comment fetched successfully"))
+})
 
 export {
     newComment,
     getComments,
     updateComment,
-    deleteComment
+    deleteComment,
+    getCommentById
 }

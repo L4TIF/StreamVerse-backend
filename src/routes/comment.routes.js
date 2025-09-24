@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { getComments, newComment, updateComment, deleteComment } from "../controllers/comment.controller.js";
+import { getComments, newComment, updateComment, deleteComment, getCommentById } from "../controllers/comment.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router()
 //public route
 router.route("/:videoId").get(getComments)
+router.route("/c/:commentId").get(getCommentById)
 
 //private route
 router.use(verifyJWT)
