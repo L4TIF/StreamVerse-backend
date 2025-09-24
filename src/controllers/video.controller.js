@@ -67,7 +67,7 @@ const publishAVideo = asynchandler(async (req, res) => {
 
     if (!video) throw ApiError(500, "publish failed")
 
-    return res.status(201).json(new ApiResponse(200, video, "Video published successfully"))
+    return res.status(201).json(new ApiResponse(201, video, "Video published successfully"))
 
 })
 

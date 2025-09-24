@@ -20,6 +20,10 @@ const commentSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
+
+commentSchema.index({ owner: 1, video: 1 })
+commentSchema.index({ video: 1 })
+
 commentSchema.plugin(mongooseAggregatePaginate)
 
 export const Comment = mongoose.model("Comment", commentSchema)

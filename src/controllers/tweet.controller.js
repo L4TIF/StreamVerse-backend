@@ -7,13 +7,13 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 //create a tweet
 const newTweet = asynchandler(async (req, res) => {
     const { content } = req?.body
-    if (content === "") throw new ApiError(400, "content cant be empty")
+    if (!content || !content.toString().trim()) throw new ApiError(400, "content cant be empty")
     const tweet = await Tweet.create({
-        owner: req?.user?._id,
-        content
+        owner: req.user?._id,
+        content: content.toString().trim()
     })
     if (!tweet) throw new ApiError(500, "failed to create tweet")
-    res.status(200).json(new ApiResponse(200, tweet, "Tweet created successfully"))
+    res.status(201).json(new ApiResponse(201, tweet, "Tweet created successfully"))
 })
 
 //get user tweets
@@ -25,8 +25,8 @@ const getUserTweets = asynchandler(async (req, res) => {
     const filter = { owner: userId }
     if (query) filter.content = new RegExp(query, "i")
     const tweets = await Tweet.find(filter).sort({ [sortBy]: sortType === "desc" ? -1 : 1 }).skip((pageNumber - 1) * limitNumber).limit(limitNumber)
-    if (!tweets.length) throw new ApiError(404, "No tweets found")
-    return res.status(200).json(new ApiResponse(200, tweets, "Tweets fetched successfully"))
+
+    return res.status(200).json(new ApiResponse(200, tweets, tweets.length ? "Tweets fetched successfully" : "no tweet found"))
 })
 
 //get tweet by id
@@ -45,7 +45,9 @@ const updateTweet = asynchandler(async (req, res) => {
     if (!isValidObjectId(tweetId)) throw new ApiError(400, "Invalid tweet id")
     const { content } = req.body
     if (content === "") throw new ApiError(400, "content cant be empty")
-    const tweet = await Tweet.findOneAndUpdate({ _id: tweetId, owner: req.user._id }, { content }, { new: true, runValidators: true })
+    const tweet = await Tweet.findOneAndUpdate({ _id: tweetId, owner: req.user._id },
+        { content: content.toString().trim() },
+        { new: true, runValidators: true })
     if (!tweet) throw new ApiError(404, "Tweet not found")
     return res.status(200).json(new ApiResponse(200, tweet, "Tweet updated successfully"))
 })
@@ -55,8 +57,8 @@ const deleteTweet = asynchandler(async (req, res) => {
     const { tweetId } = req.params
     if (!isValidObjectId(tweetId)) throw new ApiError(400, "invalid tweet id")
     const deletedTweet = await Tweet.findOneAndDelete({ _id: tweetId, owner: req?.user?._id })
-    if (!deleteTweet) throw new ApiError(500, "failed to delete tweet")
-    res.status(200).json(new ApiResponse(200, deleteTweet, "tweet deleted successfully"))
+    if (!deletedTweet) throw new ApiError(500, "failed to delete tweet")
+    res.status(200).json(new ApiResponse(200, deletedTweet, "tweet deleted successfully"))
 })
 
 export { getUserTweets, getTweetById, newTweet, updateTweet, deleteTweet }
