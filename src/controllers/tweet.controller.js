@@ -1,8 +1,9 @@
-import { isValidObjectId } from "mongoose"
+import mongoose, { isValidObjectId } from "mongoose"
 import { ApiError } from "../utils/ApiError.js"
 import { asynchandler } from "../utils/asynchandler.js"
 import { Tweet } from "../models/tweets.model.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
+import { Like } from "../models/like.model.js"
 
 //create a tweet
 const newTweet = asynchandler(async (req, res) => {
@@ -22,9 +23,67 @@ const getUserTweets = asynchandler(async (req, res) => {
     if (!isValidObjectId(userId)) throw new ApiError(400, "Invalid user id")
     const pageNumber = parseInt(page, 10)
     const limitNumber = parseInt(limit, 10)
-    const filter = { owner: userId }
+    const filter = { owner: mongoose.Types.ObjectId.createFromHexString(userId) }
     if (query) filter.content = new RegExp(query, "i")
-    const tweets = await Tweet.find(filter).sort({ [sortBy]: sortType === "desc" ? -1 : 1 }).skip((pageNumber - 1) * limitNumber).limit(limitNumber)
+
+    // const tweets = await Tweet.find(filter)
+    //     .sort({ [sortBy]: sortType === "desc" ? -1 : 1 })
+    //     .skip((pageNumber - 1) * limitNumber)
+    //     .limit(limitNumber)
+
+    // const ids = tweets.map(tweet => tweet._id)
+    // const counts = await Like.aggregate([
+    //     { $match: { tweet: { $in: ids } } },
+    //     { $group: { _id: "$tweet", count: { $sum: 1 } } }
+    // ])
+
+    // const map = Object.fromEntries(counts.map(count => [count._id, count.count]))
+
+    // const result = tweets.map(tweet => ({
+    //     ...tweet.toObject(),
+    //     likes: map[tweet._id] || 0
+    // }))
+
+    const viewerId = (req.user && mongoose.Types.ObjectId.isValid(req.user._id))
+        ? mongoose.Types.ObjectId.createFromHexString(req.user._id) : null
+
+    const tweets = await Tweet.aggregate([
+        { $match: filter }, //  Filter
+        { $sort: { [sortBy]: sortType === "desc" ? -1 : 1 } }, //  Sort
+        { $skip: (pageNumber - 1) * limitNumber }, //  Pagination
+        { $limit: limitNumber },
+        { //  Lookup likes only for paginated tweets
+            $lookup: {
+                from: "likes",
+                let: { tweetId: "$_id" },
+                pipeline: [
+                    { $match: { $expr: { $eq: ["$tweet", "$$tweetId"] } } },
+                    { $count: "count" }
+                ],
+                as: "likesCount"
+            }
+        },
+        //lookup for isLiked check
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "like"
+            }
+        },
+        { //  Flatten likes
+            $addFields: {
+                likes: { $ifNull: [{ $arrayElemAt: ["$likesCount.count", 0] }, 0] },
+                isLiked: viewerId ? { $in: [viewerId, "$like.likedBy"] } : false
+            }
+        },
+        { //  Project final fields
+            $project: { _id: 1, content: 1, likes: 1, createdAt: 1, updatedAt: 1, isLiked: 1 }
+        }
+    ]);
+
+
 
     return res.status(200).json(new ApiResponse(200, tweets, tweets.length ? "Tweets fetched successfully" : "no tweet found"))
 })
@@ -33,8 +92,45 @@ const getUserTweets = asynchandler(async (req, res) => {
 const getTweetById = asynchandler(async (req, res) => {
     const { tweetId } = req.params
     if (!isValidObjectId(tweetId)) throw new ApiError(400, "Invalid tweet id")
-    const tweet = await Tweet.findById(tweetId)
-    console.log(tweet)
+    // const tweet = await Tweet.findById(tweetId)
+    const viewerId = (req.user && mongoose.Types.ObjectId.isValid(req.user._id))
+        ? mongoose.Types.ObjectId.createFromHexString(req.user._id) : null
+
+
+    // _id owner content createdAt updatedAt
+    const tweet = await Tweet.aggregate([
+        {
+            $match: { _id: mongoose.Types.ObjectId.createFromHexString(tweetId) }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "like"
+            }
+        },
+        {
+            $addFields: {
+                likeCount: {
+                    $size: "$like"
+                },
+                isLiked: viewerId ? { $in: [viewerId, "$like.likedBy"] } : false
+            }
+
+        },
+        {
+            $project: {
+                owner: 1,
+                content: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                likeCount: 1,
+                isLiked: 1
+            }
+        }
+    ])
+
     if (!tweet) throw new ApiError(404, "Tweet not found")
     return res.status(200).json(new ApiResponse(200, tweet, "Tweet fetched successfully"))
 })

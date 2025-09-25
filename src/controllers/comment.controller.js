@@ -5,7 +5,7 @@ import { Comment } from "../models/comment.model.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { Like } from "../models/like.model.js"
 
-
+// return all comments for a video with likes count
 const getComments = asynchandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy = "createdAt", sortType = "desc" } = req.query
     const pageNumber = parseInt(page, 10)
@@ -74,7 +74,7 @@ const deleteComment = asynchandler(async (req, res) => {
     if (!deletedComment) throw new ApiError(404, "Comment not found")
     res.status(200).json(new ApiResponse(200, deletedComment, "comment deleted successfully"))
 })
-
+// return a comment by id with likes count
 const getCommentById = asynchandler(async (req, res) => {
     const { commentId } = req.params
     if (!isValidObjectId(commentId)) throw new ApiError(400, "Invalid comment id")

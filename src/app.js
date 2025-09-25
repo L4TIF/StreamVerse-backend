@@ -31,7 +31,9 @@ app.use("/api/v1/tweets", tweetRouter)
 app.use("/api/v1/comments", commentRouter)
 app.use("/api/v1/likes", likeRouter)
 
-
+//like count and isLiked added in tweets todo: add it in video, comment
+//todo: add like count in video
+//todo:use model hooks to delete dependent data like comments and likes when video or tweet is deleted
 
 
 app.use(notFoundHandler) //not found handler middleware
