@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import { asynchandler } from "../utils/asynchandler.js"
 import { deleteFromCloudinary, generateThumbnail, uploadOnCloudinary } from "../utils/cloudinary.js"
 import { isValidObjectId } from "mongoose"
+import { Like } from "../models/like.model.js"
 
 
 //get all videos
@@ -21,10 +22,37 @@ const getAllVideos = asynchandler(async (req, res) => {
     if (query) filter.title = new RegExp(query, "i") //search by title
     if (userId) filter.user = userId //search by user Id
 
-    const videos = await Video.find(filter)
-        .sort({ [sortBy]: sortType === "desc" ? -1 : 1 })
-        .skip((pageNumber - 1) * limitNumber)
-        .limit(limitNumber)
+    // const videos = await Video.find(filter)
+    //     .sort({ [sortBy]: sortType === "desc" ? -1 : 1 })
+    //     .skip((pageNumber - 1) * limitNumber)
+    //     .limit(limitNumber)
+    //     .populate("owner","avatar fullName")
+    const videos = await Video.aggregate(
+        [
+            { $match: filter },
+            { $sort: { createdAt: -1 } },
+            { $skip: (pageNumber - 1) * limitNumber },
+            { $limit: limitNumber },
+            {
+                $lookup: {
+                    from: "likes",
+                    localField: "_id",
+                    foreignField: "video",
+                    as: "likes"
+                }
+            },
+            { $addFields: { likeCount: { $size: "$likes" } } },
+            {
+                $project: {
+                    title: 1,
+                    thumbnail: 1,
+                    videoFile: 1,
+                    owner: 1,
+                    createdAt: 1,
+                    likeCount: 1
+                }
+            }
+        ])
 
     if (!videos.length) throw new ApiError(404, "Videos not found")
     return res.status(200).json(new ApiResponse(200, videos, "Videos fetched successfully"))
@@ -75,7 +103,43 @@ const publishAVideo = asynchandler(async (req, res) => {
 const getVideoById = asynchandler(async (req, res) => {
     const { videoFileId } = req.params
     if (!isValidObjectId(videoFileId)) throw new ApiError(400, "invalid video id") //check if id is valid mongo id
-    const video = await Video.findById(videoFileId)
+    const viewerId = (req.user && mongoose.Types.ObjectId.isValid(req.user._id))
+        ? mongoose.Types.ObjectId.createFromHexString(req.user._id) : null
+
+    console.log(viewerId)
+
+    const video = await Video.aggregate([
+        { $match: { _id: mongoose.Types.ObjectId.createFromHexString(videoFileId) } },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "like"
+            }
+        },
+        {
+            $addFields: {
+                likeCount: { $size: "$like" },
+                isLiked: viewerId ? { $in: [viewerId, "$like.likedBy"] } : false
+
+            }
+        },
+        {
+            $project: {
+                isLiked: 1,
+                likeCount: 1,
+                videoFile: 1,
+                owner: 1,
+                thumbnail: 1,
+                title: 1,
+                duration: 1,
+                views: 1,
+                description: 1,
+            }
+        }
+    ])
+
     if (!video) throw new ApiError(404, "video not found")
     res.status(200).json(new ApiResponse(200, video, "video fetched successfully"))
 })
@@ -135,5 +199,14 @@ const togglePublishStatus = asynchandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, updatedVideoDetails, "Toggled status successfully"))
 })
 
+const IsLiked = asynchandler(async (req, res) => {
+    const { videoId } = req.params
+    if (!isValidObjectId(videoId)) throw new ApiError(400, "Invalid video id")
+    const viewerId = (req.user && mongoose.Types.ObjectId.isValid(req.user._id))
+        ? mongoose.Types.ObjectId.createFromHexString(req.user._id) : null
+    const isLiked = viewerId && await Like.findOne({ video: videoId, likedBy: viewerId }) ? true : false
+    res.status(200).json(new ApiResponse(200, isLiked, "fetch liked status successfully"))
+})
 
-export { getAllVideos, publishAVideo, getVideoById, updateVideoDetails, deleteVideo, togglePublishStatus }
+
+export { getAllVideos, publishAVideo, getVideoById, updateVideoDetails, deleteVideo, togglePublishStatus, IsLiked }
