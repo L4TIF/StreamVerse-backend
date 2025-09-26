@@ -5,6 +5,10 @@ import { Comment } from "../models/comment.model.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { Like } from "../models/like.model.js"
 
+//todo: add likes count in comment
+//todo: add isLiked in comment
+//todo: add comment to tweet
+
 // return all comments for a video with likes count
 const getComments = asynchandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy = "createdAt", sortType = "desc" } = req.query

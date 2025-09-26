@@ -3,11 +3,11 @@ import { ApiError } from "../utils/ApiError.js"
 import { asynchandler } from "../utils/asynchandler.js"
 import { Tweet } from "../models/tweets.model.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
-import { Like } from "../models/like.model.js"
+
 
 //create a tweet
 const newTweet = asynchandler(async (req, res) => {
-    const { content } = req?.body
+    const { content } = req.body
     if (!content || !content.toString().trim()) throw new ApiError(400, "content cant be empty")
     const tweet = await Tweet.create({
         owner: req.user?._id,
