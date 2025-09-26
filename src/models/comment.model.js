@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import { Like } from "./like.model.js";
 
 const commentSchema = new mongoose.Schema({
 
@@ -20,7 +21,23 @@ const commentSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
-
+commentSchema.pre('findOneAndDelete', async function() {
+    const commentId = this.getQuery()._id
+    const userId = this.getQuery().owner
+    
+    if (!userId) {
+      throw new Error('Unauthorized: User ID required for deletion')
+    }
+    
+    // Verify user owns the comment
+    const comment = await Comment.findOne({ _id: commentId, owner: userId })
+    if (!comment) {
+      throw new Error('Unauthorized: User does not own this comment')
+    }
+    
+    // Proceed with cleanup
+    await Like.deleteMany({ comment: commentId })
+  })
 commentSchema.index({ owner: 1, video: 1 })
 commentSchema.index({ video: 1 })
 

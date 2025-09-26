@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import { Comment } from "./comment.model.js";
+import { Like } from "./like.model.js";
+import { Playlist } from "./playlist.model.js";
 
 const videoSchema = new mongoose.Schema({
 
@@ -13,6 +16,28 @@ const videoSchema = new mongoose.Schema({
     isPublished: { type: Boolean, default: true }
 
 }, { timestamps: true })
+
+
+videoSchema.pre('findOneAndDelete', async function() {
+    const videoId = this.getQuery()._id
+    const userId = this.getQuery().owner // Assuming you pass owner in query
+    
+    // Check if user is authorized to delete this video
+    if (!userId) {
+      throw new Error('Unauthorized: User ID required for deletion')
+    }
+    
+    // Verify user owns the video
+    const video = await Video.findOne({ _id: videoId, owner: userId })
+    if (!video) {
+      throw new Error('Unauthorized: User does not own this video')
+    }
+    
+    // Proceed with cleanup
+    await Comment.deleteMany({ video: videoId })
+    await Like.deleteMany({ video: videoId })
+  })
+
 
 // Indexes for common queries
 videoSchema.index({ owner: 1 })                    // Get user's videos
