@@ -22,7 +22,7 @@ const likeSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
-// Compound indexes for common query patterns
+
 // Compound indexes for common query patterns
 likeSchema.index(
     { likedBy: 1, video: 1 },

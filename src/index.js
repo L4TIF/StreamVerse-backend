@@ -17,9 +17,6 @@ connectDB()
             throw error
         })
         app.listen(PORT, () => console.log("app listening on port :", PORT))
-        // app.get("/", (req, res) => {
-        //     res.send("<h1>Hello backend</h1>")
-        // })
     })
     .catch(error => console.log("mongo db connection error", error.message))
 
