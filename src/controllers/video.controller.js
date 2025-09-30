@@ -41,7 +41,24 @@ const getAllVideos = asynchandler(async (req, res) => {
                     as: "likes"
                 }
             },
-            { $addFields: { likeCount: { $size: "$likes" } } },
+
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "owner",
+                    foreignField: "_id",
+                    as: "creator",
+                    pipeline: [
+                        { $project: { fullName: 1, avatar: 1 } }
+                    ]
+                }
+            },
+            { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
+            {
+                $addFields: {
+                    likeCount: { $size: "$likes" },
+                }
+            },
             {
                 $project: {
                     title: 1,
@@ -49,7 +66,8 @@ const getAllVideos = asynchandler(async (req, res) => {
                     videoFile: 1,
                     owner: 1,
                     createdAt: 1,
-                    likeCount: 1
+                    likeCount: 1,
+                    creator: 1
                 }
             }
         ])
