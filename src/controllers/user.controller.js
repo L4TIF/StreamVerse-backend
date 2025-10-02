@@ -121,9 +121,8 @@ const loginUser = asynchandler(async (req, res) => {
     //send response
     return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
-        .json(new ApiResponse(200, { user: userData, accessToken, refreshToken }, "user logged in successfully"))
+        .json(new ApiResponse(200, { user: userData, accessToken }, "user logged in successfully"))
 })
 
 const logoutUser = asynchandler(async (req, res) => {
@@ -175,15 +174,6 @@ const refreshAccessToken = asynchandler(async (req, res) => {
         //generate new access token
         const newAccessToken = user.generateAccessToken()
 
-        //set new access token in cookie
-        const options = {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000 //7 days
-        }
-
-        res.cookie("accessToken", newAccessToken, options)
 
         //send response
         return res.status(200).json(new ApiResponse(200, { accessToken: newAccessToken }, "Access token refreshed successfully"))
