@@ -24,12 +24,12 @@ router.route("/register").post(
 )
 router.route("/login").post(loginUser);
 
+router.route("/refresh-token").get(refreshAccessToken);
 //private routes
 
 router.use(verifyJWT)
 
 router.route("/logout").post(verifyJWT, logoutUser);
-router.route("/refresh-token").get(verifyJWT, refreshAccessToken);
 router.route("/update-password").post(verifyJWT, changePassword)
 router.route("/get-current-user").get(verifyJWT, getCurrentUser)
 router.route("/updateAccountDetails").patch(verifyJWT, updateAccountDetails)
