@@ -116,7 +116,7 @@ const loginUser = asynchandler(async (req, res) => {
         maxAge: 7 * 24 * 60 * 60 * 1000 //7 days
     }
 
-
+    console.log(refreshToken)
 
     //send response
     return res
