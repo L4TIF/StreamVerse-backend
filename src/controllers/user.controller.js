@@ -154,7 +154,6 @@ const logoutUser = asynchandler(async (req, res) => {
 
 const refreshAccessToken = asynchandler(async (req, res) => {
     const refreshToken = req.cookies?.refreshToken || req.headers?.authorization?.split(" ")[1];
-
     if (!refreshToken) {
         throw new ApiError(401, "Unauthorized");
     }
@@ -173,8 +172,6 @@ const refreshAccessToken = asynchandler(async (req, res) => {
 
         //generate new access token
         const newAccessToken = user.generateAccessToken()
-
-
         //send response
         return res.status(200).json(new ApiResponse(200, { accessToken: newAccessToken }, "Access token refreshed successfully"))
     })
