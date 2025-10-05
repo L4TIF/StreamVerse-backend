@@ -79,7 +79,16 @@ const registerUser = asynchandler(async (req, res) => {
 
 const loginUser = asynchandler(async (req, res) => {
     //get user details
-    const { userName, email, password } = req.body
+    const { id, password } = req.body
+    let userName = ""
+    let email = ""
+
+    if (id.toString().includes("@"))
+        email = id
+    else
+        userName = id
+
+
     //validate user details
     if ([userName || email, password].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required")
