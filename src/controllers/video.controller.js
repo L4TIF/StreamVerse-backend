@@ -229,18 +229,24 @@ const IsLiked = asynchandler(async (req, res) => {
 
 const searchVideoByTitle = asynchandler(async (req, res) => {
     const { query } = req.body
-    if (query.trim().length < 0) throw new ApiError(400, "no query found")
+    // Fix: Check if query is empty or too short
+    if (!query || query.trim().length < 1) {
+        throw new ApiError(400, "Search query is required")
+    }
 
     // Search in multiple fields
     const searchedItem = await Video.find({
+        isPublished: true,
         $or: [
             { title: new RegExp(query, "i") },
-            { description: new RegExp(query, "i") }
+            { description: new RegExp(query, "i") },
         ]
     })
+        .populate("owner", "fullName avatar") // Add owner info
+        .sort({ createdAt: -1 }) // Sort by newest first
     if (!searchedItem) throw new ApiError(404, "No videos found")
     res.status(200).json(new ApiResponse(200, searchedItem, "video fetched successfully"))
 
 })
 
-export { getAllVideos, publishAVideo, getVideoById, updateVideoDetails, deleteVideo, togglePublishStatus, IsLiked,searchVideoByTitle }
+export { getAllVideos, publishAVideo, getVideoById, updateVideoDetails, deleteVideo, togglePublishStatus, IsLiked, searchVideoByTitle }
