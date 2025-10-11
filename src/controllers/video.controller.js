@@ -227,4 +227,20 @@ const IsLiked = asynchandler(async (req, res) => {
 })
 
 
-export { getAllVideos, publishAVideo, getVideoById, updateVideoDetails, deleteVideo, togglePublishStatus, IsLiked }
+const searchVideoByTitle = asynchandler(async (req, res) => {
+    const { query } = req.body
+    if (query.trim().length < 0) throw new ApiError(400, "no query found")
+
+    // Search in multiple fields
+    const searchedItem = await Video.find({
+        $or: [
+            { title: new RegExp(query, "i") },
+            { description: new RegExp(query, "i") }
+        ]
+    })
+    if (!searchedItem) throw new ApiError(404, "No videos found")
+    res.status(200).json(new ApiResponse(200, searchedItem, "video fetched successfully"))
+
+})
+
+export { getAllVideos, publishAVideo, getVideoById, updateVideoDetails, deleteVideo, togglePublishStatus, IsLiked,searchVideoByTitle }
