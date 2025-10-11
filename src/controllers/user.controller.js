@@ -28,9 +28,11 @@ const registerUser = asynchandler(async (req, res) => {
     })
 
     if (existedUser) {
+
         // unlink uploaded file in local if user is trying to re-register
-        fs.unlinkSync(coverImageLocalPath)
+        if (coverImageLocalPath) fs.unlinkSync(coverImageLocalPath)
         fs.unlinkSync(avatarLocalPath)
+
         throw new ApiError(409, "User already exist")
     }
     //check for images, check of avatar
