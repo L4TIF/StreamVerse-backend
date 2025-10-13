@@ -22,11 +22,6 @@ const getAllVideos = asynchandler(async (req, res) => {
     if (query) filter.title = new RegExp(query, "i") //search by title
     if (userId) filter.user = userId //search by user Id
 
-    // const videos = await Video.find(filter)
-    //     .sort({ [sortBy]: sortType === "desc" ? -1 : 1 })
-    //     .skip((pageNumber - 1) * limitNumber)
-    //     .limit(limitNumber)
-    //     .populate("owner","avatar fullName")
     const videos = await Video.aggregate(
         [
             { $match: filter },
@@ -236,18 +231,46 @@ const searchVideoByTitle = asynchandler(async (req, res) => {
         throw new ApiError(400, "Search query is required")
     }
 
-    // Search in multiple fields
-    const searchedItem = await Video.find({
-        isPublished: true,
-        $or: [
-            { title: new RegExp(query, "i") },
-            { description: new RegExp(query, "i") },
-        ]
-    })
-        .populate("owner", "fullName avatar") // Add owner info
-        .sort({ createdAt: -1 }) // Sort by newest first
+      // Search in multiple fields
+      const searchedItem = await Video.aggregate([
+        {
+            $match: {
+                isPublished: true,
+                $or: [
+                    { title: { $regex: query, $options: "i" } },
+                    { description: { $regex: query, $options: "i" } },
+                ],
+            },
+        },
+        { $sort: { createdAt: -1 } },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "creator",
+                pipeline: [{ $project: { fullName: 1, avatar: 1 } }],
+            },
+        },
+        { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
+        {
+            $project: {
+                title: 1,
+                thumbnail: 1,
+                videoFile: 1,
+                createdAt: 1,
+                duration: 1,
+                views: 1,
+                creator: 1,
+                // drop original owner to avoid confusion
+                // owner: 0,
+            },
+        },
+    ])
     if (!searchedItem) throw new ApiError(404, "No videos found")
     res.status(200).json(new ApiResponse(200, searchedItem, "video fetched successfully"))
+   
+
 
 })
 
