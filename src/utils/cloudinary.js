@@ -1,8 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { configDotenv } from 'dotenv';
 import fs from 'fs';
 import { ApiError } from './ApiError.js';
-configDotenv()  //load env variables from .env file
+
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
