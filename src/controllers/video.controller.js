@@ -140,7 +140,25 @@ const getVideoById = asynchandler(async (req, res) => {
                 foreignField: "_id",
                 as: "creator",
                 pipeline: [
-                    { $project: { fullName: 1, avatar: 1 } }
+
+                    {
+
+                        $lookup: {
+                            from: "subscriptions",
+                            localField: "_id",
+                            foreignField: "channel",
+                            as: "subscribers"
+                        }
+                    },
+                    {
+                        $addFields: {
+                            subscribersCount: {
+                                $size: "$subscribers"
+                            }
+                        },
+                    },
+
+                    { $project: { fullName: 1, avatar: 1, userName: 1, subscribersCount: 1 } }
                 ]
             }
         },
@@ -165,6 +183,7 @@ const getVideoById = asynchandler(async (req, res) => {
                 views: 1,
                 description: 1,
                 creator: 1,
+                createdAt: 1,
             }
         }
     ])
@@ -245,8 +264,8 @@ const searchVideoByTitle = asynchandler(async (req, res) => {
         throw new ApiError(400, "Search query is required")
     }
 
-      // Search in multiple fields
-      const searchedItem = await Video.aggregate([
+    // Search in multiple fields
+    const searchedItem = await Video.aggregate([
         {
             $match: {
                 isPublished: true,
@@ -283,7 +302,7 @@ const searchVideoByTitle = asynchandler(async (req, res) => {
     ])
     if (!searchedItem) throw new ApiError(404, "No videos found")
     res.status(200).json(new ApiResponse(200, searchedItem, "video fetched successfully"))
-   
+
 
 
 })
