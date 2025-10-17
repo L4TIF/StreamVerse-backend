@@ -134,6 +134,19 @@ const getVideoById = asynchandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "creator",
+                pipeline: [
+                    { $project: { fullName: 1, avatar: 1 } }
+                ]
+            }
+        },
+        { $unwind: { path: "$creator", preserveNullAndEmptyArrays: true } },
+
+        {
             $addFields: {
                 likeCount: { $size: "$like" },
                 isLiked: viewerId ? { $in: [viewerId, "$like.likedBy"] } : false
@@ -151,6 +164,7 @@ const getVideoById = asynchandler(async (req, res) => {
                 duration: 1,
                 views: 1,
                 description: 1,
+                creator: 1,
             }
         }
     ])
