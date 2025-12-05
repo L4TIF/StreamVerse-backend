@@ -23,8 +23,8 @@ router.route("/register").post(
     registerUser
 )
 router.route("/login").post(loginUser);
-
 router.route("/refresh-token").get(refreshAccessToken);
+router.route("/get-user-channel-profile/:userName").get(getUserChannelProfile)
 //private routes
 
 router.use(verifyJWT)
@@ -43,7 +43,7 @@ router.route("/update-coverImage").patch(verifyJWT,
     updateUserCoverImage
 )
 
-router.route("/get-user-channel-profile/:userName").get(verifyJWT, getUserChannelProfile)
+
 router.route("/get-user-watch-history").get(verifyJWT, getUserWatchHistory)
 
 export default router
